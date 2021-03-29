@@ -48,18 +48,26 @@ app.get('/:room', (req, res) => {
 //we need to set up the video connection-we're joining new room with current user
 io.on('connection', socket => {
     socket.on('join-room', (roomId, userId) => {
-//        console.log(roomId, userId)
+ //       console.log(roomId, userId)
         socket.join(roomId)
         //send message to room we're currently in-sends to everyone else in the same room but not me
         //        socket.to(roomId).broadcast.emit('user-connected', userId) -dont need to use broadcast property
         socket.to(roomId).emit('user-connected', userId)
-
+        //send and receive messages in the chat
+        //socket.on will listen for the message and receive message(argument for our function)
+        //then send message to the frontend to the specific room id not eveyr room
+        socket.on('message', (message) => {
+            //send message to the same chat room each participant is in
+            io.to(roomId).emit('createMessage', message)
+        });
         //occurs whenever user disconnects from server
+        
         socket.on('disconnect', () => {
             socket.to(roomId).emit('user-disconnected', userId)
         })
     })
 })
+//when user connected we want a message to be sent to the same room
 
 //starts server on port 3000
 server.listen(3000)
